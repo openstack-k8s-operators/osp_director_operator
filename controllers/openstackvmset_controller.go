@@ -350,6 +350,14 @@ func (r *OpenStackVMSetReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	//
 	templateParameters["DomainName"] = osNetCfg.Spec.DomainName
 
+	if instance.Spec.GrowvolsArgs != nil && len(instance.Spec.GrowvolsArgs) > 0 {
+		templateParameters["GrowvolsArgs"] = instance.Spec.GrowvolsArgs
+
+	} else {
+		// use default for the role name
+		templateParameters["GrowvolsArgs"] = common.GetRoleGrowvolsArgs(instance.Spec.RoleName)
+	}
+
 	//
 	// check if PasswordSecret got specified and if it exists before creating the controlplane
 	//
@@ -848,6 +856,12 @@ func (r *OpenStackVMSetReconciler) vmCreateInstance(
 						},
 						Machine: &virtv1.Machine{
 							Type: "",
+						},
+						Features: &virtv1.Features{
+							SMM: &virtv1.FeatureState{Enabled: &trueValue},
+						},
+						Firmware: &virtv1.Firmware{
+							Bootloader: &virtv1.Bootloader{EFI: &virtv1.EFI{}},
 						},
 					},
 					Volumes: []virtv1.Volume{},
